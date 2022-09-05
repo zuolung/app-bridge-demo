@@ -4,7 +4,7 @@ import getScriptFromHtml from './getScriptFromHtml'
 if (!window.__domi_app_data__) window.__domi_app_data__ = {}
 if (!window.__domi_beUsed__) window.__domi_beUsed__ = {}
 
-const scriptTaskCache = {}
+if (!window.__domi_scriptTaskCache__) window.__domi_scriptTaskCache__ = {}
 
 function registerApp(appName, data) {
   const origin = window.__domi_app_data__ || {}
@@ -41,17 +41,16 @@ async function asyncLoader({ url, name }) {
     return Promise.resolve(window.__domi_app_data__[name])
   }
 
-  if (scriptTaskCache[url]) {
-    return scriptTaskCache[url]
+  if (window.__domi_scriptTaskCache__[url]) {
+    return window.__domi_scriptTaskCache__[url]
   }
 
   window.__domi_beUsed__[name] = true
 
-  const htmlStr = await fetchHtml(url)
-  const scripts = getScriptFromHtml(htmlStr).scripts
-  const mainScript = scripts[scripts.length - 1]
-
-  const promiseResult = new Promise((resolve, reject) => {
+  const promiseResult = new Promise(async (resolve, reject) => {
+    const htmlStr = await fetchHtml(url)
+    const scripts = getScriptFromHtml(htmlStr).scripts
+    const mainScript = scripts[scripts.length - 1]
     const scriptor = document.createElement('script')
     scriptor.src = `${getOrigin(url)}/${mainScript.src}`
 
@@ -66,7 +65,7 @@ async function asyncLoader({ url, name }) {
     }
   })
 
-  scriptTaskCache[url] = promiseResult
+  window.__domi_scriptTaskCache__[url] = promiseResult
 
   return promiseResult
 }
